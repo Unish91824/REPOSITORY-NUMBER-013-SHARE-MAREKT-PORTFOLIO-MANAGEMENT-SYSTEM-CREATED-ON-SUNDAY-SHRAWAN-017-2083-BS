@@ -21,6 +21,14 @@ function App() {
     SN: "",
   });
 
+  // State for date & time with location
+  const [dateTimeLoc, setDateTimeLoc] = useState({
+    dateTime: "",
+    latitude: null,
+    longitude: null,
+    location: "",
+  });
+
   // Update clock every second
   useEffect(() => {
     const timer = setInterval(() => {
@@ -29,13 +37,47 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // Get user's current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const locationName = `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
+          setDateTimeLoc({
+            dateTime: new Date().toLocaleString(),
+            latitude,
+            longitude,
+            location: locationName,
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setDateTimeLoc({
+            dateTime: new Date().toLocaleString(),
+            latitude: null,
+            longitude: null,
+            location: "Location access denied",
+          });
+        }
+      );
+    } else {
+      setDateTimeLoc({
+        dateTime: new Date().toLocaleString(),
+        latitude: null,
+        longitude: null,
+        location: "Geolocation not supported",
+      });
+    }
+  }, [currentTime]);
+
   // Handle login form change
   const handleLoginChange = (e) => {
     setLoginForm({ ...loginForm, [e.target.name]: e.target.value });
   };
 
   // Handle login submit
-  const handleLogin = (e) => {
+ const handleLogin = (e) => {
     e.preventDefault();
     const { email, password } = loginForm;
     if (
@@ -141,8 +183,13 @@ function App() {
       ? records[records.length - 1].closingBalance
       : 0;
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setLoginForm({ email: "", password: "" });
+  };
+
   if (!isLoggedIn) {
-    // Login page with colorful purple theme and dynamic background
+    // Login page
     return (
       <div
         style={{
@@ -165,6 +212,9 @@ function App() {
             maxWidth: "400px",
             width: "100%",
             boxShadow: "0 8px 16px rgba(0,0,0,0.3)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
           <h1
@@ -180,7 +230,7 @@ function App() {
           </h1>
           <form
             onSubmit={handleLogin}
-            style={{ display: "flex", flexDirection: "column" }}
+            style={{ display: "flex", flexDirection: "column", width: "100%" }}
           >
             <input
               type="email"
@@ -254,20 +304,90 @@ function App() {
   // Main app after login
   return (
     <div className="container">
-      {/* Header */}
+      {/* Header with Nepal Flag, title, date/time with location, and logout */}
       <div
-        className="topBar"
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "center",
           alignItems: "center",
           padding: "20px",
           backgroundColor: "#4B0082",
-          color: "white",
+          position: "relative",
         }}
       >
-        <h1 style={{ margin: 0, color: "red" }}>Stock Market Portfolio Management System</h1>
-        <div style={{ fontSize: "18px" }}>{currentTime.toLocaleString()}</div>
+        {/* Nepal Flag on Top Left */}
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/9/9b/Flag_of_Nepal.svg"
+          alt="Nepal Flag"
+          style={{
+            width: "50px",
+            height: "30px",
+            position: "absolute",
+            top: "10px",
+            left: "10px",
+            objectFit: "contain",
+            border: "1px solid #fff",
+            borderRadius: "3px",
+          }}
+        />
+
+        <h1
+          style={{
+            margin: 0,
+            color: "red",
+            fontSize: "24px",
+            textAlign: "center",
+            width: "100%",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          Stock Market Portfolio Management System
+        </h1>
+
+        {/* Date & Time with Location at top right */}
+        <div
+          style={{
+            position: "absolute",
+            right: "120px",
+            top: "20px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            fontSize: "14px",
+            color: "white",
+            lineHeight: "1.2",
+          }}
+        >
+          <div>
+            <strong>Date & Time:</strong> {dateTimeLoc.dateTime}
+          </div>
+          <div>
+            <strong>Location:</strong> {dateTimeLoc.location}
+          </div>
+        </div>
+        {/* Logout button at top right */}
+        <button
+          onClick={handleLogout}
+          style={{
+            position: "absolute",
+            right: "20px",
+            top: "20px",
+            padding: "8px 16px",
+            backgroundColor: "#e74c3c",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "14px",
+            transition: "background-color 0.3s",
+            zIndex: 2,
+          }}
+          onMouseOver={(e) => (e.target.style.backgroundColor = "#c0392b")}
+          onMouseOut={(e) => (e.target.style.backgroundColor = "#e74c3c")}
+        >
+          Logout
+        </button>
       </div>
 
       {/* Dashboard Cards */}
@@ -596,7 +716,7 @@ function App() {
 const tableHeaderStyle = {
   border: "1px solid #ccc",
   padding: "8px",
-  backgroundColor: "#8A2BE2", // purple header
+  backgroundColor: "#8A2BE2",
   color: "white",
   textAlign: "center",
 };
